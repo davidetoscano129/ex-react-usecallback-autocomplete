@@ -1,3 +1,13 @@
+const debounce = (callback, delay) => {
+  let timeout;
+  return (value) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      callback(value);
+    }, delay);
+  };
+};
+
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -5,17 +15,26 @@ function App() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
-  useEffect(() => {
+  const fetchProducts = async (query) => {
     if (!query.trim()) {
       setSuggestions([]);
       return;
     }
-    fetch(
-      `https://boolean-spec-frontend.vercel.app/freetestapi/products?search=${query}`
-    )
-      .then((response) => response.json())
-      .then((data) => setSuggestions(data))
-      .catch((error) => crossOriginIsolated.error(error));
+    try {
+      const res = await fetch(
+        `https://boolean-spec-frontend.vercel.app/freetestapi/products?search=${query}`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const debouncedFetchProducts = useCallback(debounce(fetchProducts, 500), []);
+
+  useEffect(() => {
+    debouncedFetchProducts;
   }, [query]);
 
   return (
